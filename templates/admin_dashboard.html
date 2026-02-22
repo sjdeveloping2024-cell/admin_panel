@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>OPTI Admin Dashboard</title>
+  <style>
+    body { font-family: Arial,sans-serif; margin:0; background:#f4f4f4; }
+    .layout { display:flex; height:100vh; }
+    .sidebar { width:220px; background:#2c3e50; color:#fff; padding:20px; }
+    .sidebar h2.logo { font-size:24px; margin-bottom:20px; }
+    .sidebar ul li { list-style:none; margin:15px 0; cursor:pointer; }
+    .sidebar ul li.active { font-weight:bold; }
+    .sidebar ul li a { color:#fff; text-decoration:none; }
+    .main { flex:1; padding:20px; overflow-y:auto; }
+    .topbar { display:flex; justify-content:space-between; margin-bottom:20px; }
+    .stats-container { display:flex; gap:20px; margin-bottom:20px; }
+    .card { flex:1; background:#f39c12; padding:20px; border-radius:10px; color:#fff; text-align:center; }
+    .section { display:none; }
+    .section.show { display:block; }
+
+    /* Container for Employees Section */
+    .container { display:flex; gap:20px; flex-wrap:wrap; }
+
+    /* Employee Form */
+    .employee-form { flex:1; min-width:250px; background:#fff; padding:15px; border-radius:10px; box-shadow:0 2px 5px rgba(0,0,0,0.2);}
+    .employee-form input, .employee-form select, .employee-form button { width:100%; margin:6px 0; padding:8px; border-radius:6px; border:1px solid #ccc; box-sizing:border-box; }
+    .employee-form button { background:#e67e22; color:#fff; font-weight:bold; cursor:pointer; transition:0.3s; }
+    .employee-form button:hover { background:#d35400; transform:scale(1.05); }
+
+    /* Employee Table */
+    .employee-table { flex:2; min-width:350px; background:#fff; padding:15px; border-radius:10px; box-shadow:0 2px 5px rgba(0,0,0,0.2); max-height:500px; overflow-y:auto; }
+    .employee-table table { width:100%; border-collapse:collapse; }
+    .employee-table th, .employee-table td { padding:8px; border-bottom:1px solid #ddd; text-align:left; }
+    .employee-table th { background:#e67e22; color:#fff; position:sticky; top:0; }
+    .employee-table button { background:red; color:#fff; padding:5px 10px; border:none; border-radius:4px; cursor:pointer; }
+    .employee-table button:hover { background:darkred; }
+
+    /* Attendance Table */
+    .table-container { max-height:300px; overflow-y:auto; margin-top:10px; border-radius:10px; border:1px solid #ccc; background:#fff; }
+    .table-container table { width:100%; border-collapse:collapse; }
+    .table-container th, .table-container td { padding:8px; border-bottom:1px solid #ddd; text-align:left; }
+    .table-container th { background:#e67e22; color:#fff; position:sticky; top:0; }
+    .table-container tr:hover { background:#f0f0f0; }
+    .export-btn { padding:8px 12px; background:#e67e22; color:#fff; border:none; cursor:pointer; margin-bottom:10px; border-radius:6px; }
+    .export-btn:hover { background:#d35400; }
+
+  </style>
+</head>
+<body>
+<div class="layout">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <h2 class="logo">OPTI Admin</h2>
+    <ul>
+      <li class="active" onclick="showSection('dashboard')">Dashboard</li>
+      <li onclick="showSection('attendance')">Attendance</li>
+      <li onclick="showSection('salary')">Salary</li>
+      <li onclick="showSection('employees')">Employees</li>
+      <li><a href="{{ url_for('logout') }}">Logout</a></li>
+    </ul>
+  </aside>
+
+  <!-- Main Content -->
+  <div class="main">
+    <div class="topbar">
+      <h1>Admin Dashboard</h1>
+      <div class="admin-name">Welcome, {{ admin_name }}</div>
+    </div>
+
+    <!-- Dashboard Stats -->
+    <div id="dashboard" class="section show">
+      <div class="stats-container">
+        <div class="card"><h3>Total Employees</h3><p>{{ total_employees }}</p></div>
+        <div class="card"><h3>Present Today</h3><p>{{ present_today }}</p></div>
+        <div class="card"><h3>Total Salary Today</h3><p>₱{{ total_salary }}</p></div>
+      </div>
+    </div>
+
+    <!-- Attendance Section -->
+    <div id="attendance" class="section">
+      <h2>Attendance Records</h2>
+      <form action="{{ url_for('export_excel') }}" method="get"><button class="export-btn" type="submit">Export to Excel</button></form>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Time In</th>
+              <th>Time Out</th>
+              <th>Duration</th>
+              <th>Salary (₱)</th>
+            </tr>
+          </thead>
+          <tbody id="attendance-table">
+            {% for r in records %}
+            <tr>
+              <td>{{ r.name }}</td>
+              <td>{{ r.time_in.strftime('%H:%M') if r.time_in else '' }}</td>
+              <td>{{ r.time_out.strftime('%H:%M') if r.time_out else '' }}</td>
+              <td>{{ r.duration }}</td>
+              <td>{{ r.salary }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Salary Section -->
+    <div id="salary" class="section">
+      <h2>Salary Status</h2>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Time In</th>
+              <th>Time Out</th>
+              <th>Duration</th>
+              <th>Salary (₱)</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for r in records %}
+            <tr>
+              <td>{{ r.name }}</td>
+              <td>{{ r.time_in.strftime('%H:%M') if r.time_in else '' }}</td>
+              <td>{{ r.time_out.strftime('%H:%M') if r.time_out else '' }}</td>
+              <td>{{ r.duration }}</td>
+              <td>{{ r.salary }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Employees Section -->
+    <div id="employees" class="section">
+      <h2>Manage Employees</h2>
+      <div class="container">
+        <!-- Employee Form -->
+        <form class="employee-form" id="employee-form">
+          <input type="text" name="name_inp" placeholder="Name" required>
+          <input type="number" name="age_inp" placeholder="Age" required>
+          <select name="sex_inp" required>
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+          </select>
+          <input type="email" name="email_inp" placeholder="Email" required>
+          <input type="text" name="num_inp" placeholder="Phone Number" required>
+          <input type="text" name="rfid_inp" placeholder="RFID UID" required>
+          <button type="submit">Add Employee</button>
+        </form>
+
+        <!-- Employee Table -->
+        <div class="employee-table">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Phone Number</th>
+                <th>RFID</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="employee-table-body">
+              {% for e in employees %}
+              <tr>
+                <td>{{ e.id_employee }}</td>
+                <td>{{ e.name }}</td>
+                <td>{{ e.email }}</td>
+                <td>{{ e.number }}</td>
+                <td>{{ e.rfid }}</td>
+                <td><button class="drop-btn" data-id="{{ e.id_employee }}">Drop</button></td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+<script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
+<script>
+const socket = io();
+
+// Attendance live updates
+socket.on("attendance_update", data => {
+  const table = document.getElementById("attendance-table");
+  const row = document.createElement("tr");
+  row.innerHTML = `
+    <td>${data.name}</td>
+    <td>${data.status==="time_in"?data.time:""}</td>
+    <td>${data.status==="time_out"?data.time:""}</td>
+    <td>${data.duration||""}</td>
+    <td>${data.salary||""}</td>
+  `;
+  table.appendChild(row);
+});
+
+// Section navigation
+function showSection(id){
+  document.querySelectorAll(".section").forEach(s=>s.classList.remove("show"));
+  document.getElementById(id).classList.add("show");
+  document.querySelectorAll(".sidebar ul li").forEach(li=>li.classList.remove("active"));
+  const li=Array.from(document.querySelectorAll(".sidebar ul li")).find(l=>l.textContent.toLowerCase()===id);
+  if(li) li.classList.add("active");
+}
+
+// AJAX Add Employee
+$('#employee-form').submit(function(e){
+  e.preventDefault();
+  $.post("{{ url_for('add_employee') }}", $(this).serialize(), function(data){
+    const row = `<tr>
+      <td>${data.id_employee}</td>
+      <td>${data.name}</td>
+      <td>${data.email}</td>
+      <td>${data.number}</td>
+      <td>${data.rfid}</td>
+      <td><button class="drop-btn" data-id="${data.id_employee}">Drop</button></td>
+    </tr>`;
+    $('#employee-table-body').append(row);
+    $('#employee-form')[0].reset();
+  });
+});
+
+// AJAX Drop Employee
+$(document).on('click', '.drop-btn', function(){
+    const emp_id = $(this).data('id');  // Get employee ID from button
+    const btn = $(this);
+
+    $.post("{{ url_for('drop_employee') }}", { employ_id: emp_id }, function(res){
+        if(res.status === "success"){
+            // Remove row from table
+            btn.closest('tr').remove();
+
+            // Re-fetch all employees from backend to re-render IDs and data
+            $.get("{{ url_for('admin_dashboard') }}", function(html){
+                // Parse the returned HTML to extract employee rows
+                const tempDom = $('<div>').html(html);
+                const rows = tempDom.find('#employee-table-body').html();
+                $('#employee-table-body').html(rows);
+            });
+        } else {
+            alert("Failed to delete employee");
+        }
+    });
+});
+</script>
+</body>
+</html>
