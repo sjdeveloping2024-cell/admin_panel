@@ -87,7 +87,7 @@
               <th>Name</th>
               <th>Time In</th>
               <th>Time Out</th>
-              <th>Duration</th>
+              <th>Duration (Late / Undertime)</th>
               <th>Salary (₱)</th>
             </tr>
           </thead>
@@ -97,7 +97,7 @@
               <td>{{ r.name }}</td>
               <td>{{ r.time_in.strftime('%H:%M') if r.time_in else '' }}</td>
               <td>{{ r.time_out.strftime('%H:%M') if r.time_out else '' }}</td>
-              <td>{{ r.duration }}</td>
+              <td>{{ r.duration }} (Late: {{ r.late_minutes }} / Undertime: {{ r.undertime_minutes }})</td>
               <td>{{ r.salary }}</td>
             </tr>
             {% endfor %}
@@ -116,7 +116,7 @@
               <th>Name</th>
               <th>Time In</th>
               <th>Time Out</th>
-              <th>Duration</th>
+              <th>Duration (Late / Undertime)</th>
               <th>Salary (₱)</th>
             </tr>
           </thead>
@@ -126,7 +126,7 @@
               <td>{{ r.name }}</td>
               <td>{{ r.time_in.strftime('%H:%M') if r.time_in else '' }}</td>
               <td>{{ r.time_out.strftime('%H:%M') if r.time_out else '' }}</td>
-              <td>{{ r.duration }}</td>
+              <td>{{ r.duration }} (Late: {{ r.late_minutes }} / Undertime: {{ r.undertime_minutes }})</td>
               <td>{{ r.salary }}</td>
             </tr>
             {% endfor %}
@@ -197,9 +197,9 @@ socket.on("attendance_update", data => {
   const row = document.createElement("tr");
   row.innerHTML = `
     <td>${data.name}</td>
-    <td>${data.status==="time_in"?data.time:""}</td>
-    <td>${data.status==="time_out"?data.time:""}</td>
-    <td>${data.duration||""}</td>
+    <td>${data.status==="time_in"?data.time_in||"":""}</td>
+    <td>${data.status==="time_out"?data.time_out||"":""}</td>
+    <td>${data.duration||""} (Late: ${data.late_minutes||0}, Undertime: ${data.undertime_minutes||0})</td>
     <td>${data.salary||""}</td>
   `;
   table.appendChild(row);
@@ -238,12 +238,8 @@ $(document).on('click', '.drop-btn', function(){
 
     $.post("{{ url_for('drop_employee') }}", { employ_id: emp_id }, function(res){
         if(res.status === "success"){
-            // Remove row from table
             btn.closest('tr').remove();
-
-            // Re-fetch all employees from backend to re-render IDs and data
             $.get("{{ url_for('admin_dashboard') }}", function(html){
-                // Parse the returned HTML to extract employee rows
                 const tempDom = $('<div>').html(html);
                 const rows = tempDom.find('#employee-table-body').html();
                 $('#employee-table-body').html(rows);
